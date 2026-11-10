@@ -4,9 +4,10 @@ import { useApp, statKey } from "../store/context";
 import { completeCount, DOMINIC, FIELD_LABEL, fieldsOf, HELPERS, hintFor, isComplete, isUsable, KEYS, MAJOR, MODES, parseBulk, toBulk } from "../lib/codes";
 import { recentMs, formatMs } from "../lib/stats";
 import { download } from "../lib/files";
-import { Dialog, Seg } from "../components/ui";
+import { EXAMPLES } from "../lib/examples";
+import { Confirm, Dialog, Seg } from "../components/ui";
 
-const PLACEHOLDER = { person: "e.g. Albert Einstein", action: "e.g. writing on a blackboard", object: "e.g. a chalk", image: "e.g. a nut" };
+const LOOSE = Object.keys(EXAMPLES).filter((k) => EXAMPLES[k].loose).sort();
 
 function PasteDialog({ open, onClose, mode }) {
   const { actions } = useApp();
@@ -41,8 +42,18 @@ export default function System() {
   const { system, codeStats, actions } = useApp();
   const [view, setView] = useState({ filter: "all", keys: KEYS });
   const [paste, setPaste] = useState(false);
+  const [fill, setFill] = useState(false);
   const fields = fieldsOf(system);
   const done = completeCount(system);
+  const examples = system.helper === "dominic" && system.mode !== "image";
+  // Only numbers with no person and no action yet, so your own choices are never mixed with an example.
+  const blank = KEYS.filter((k) => !(system.entries[k]?.person || "").trim() && !(system.entries[k]?.action || "").trim());
+  const useExamples = () => {
+    actions.mergeEntries(Object.fromEntries(blank.map((k) => [k, { person: EXAMPLES[k].person, action: EXAMPLES[k].action }])));
+    actions.say(`Filled ${blank.length} with examples`);
+    setFill(false);
+  };
+  const placeholder = (k, f) => (examples && EXAMPLES[k][f] ? "e.g. " + EXAMPLES[k][f] : FIELD_LABEL[f]);
 
   // The list is worked out when you pick a filter, so a row doesn't vanish while you type in it.
   const pick = (filter) => setView({
@@ -86,6 +97,10 @@ export default function System() {
               {[...DOMINIC].map((l, d) => <span key={d} className="tag" style={{ fontSize: ".86rem" }}>{d} = {l}</span>)}
             </div>
             <p className="muted">So 15 is A·E (Albert Einstein) and 34 is C·D (Charles Darwin). Initials are a starting point: a person you know well always beats a famous name you feel nothing about. For 4 digits, picture the first number's person doing the second number's action.</p>
+            {examples && <>
+              <p className="muted">The grey text in each row is an example person and action. Most are initials; {LOOSE.join(", ")} use the first letters of one name instead, like 95 = N·E = NEo. Swap in your own people whenever one doesn't grab you.</p>
+              {blank.length > 0 && <div><button className="btn small" onClick={() => setFill(true)}>Use the examples for the {blank.length} empty number{blank.length === 1 ? "" : "s"}</button></div>}
+            </>}
           </div>
         )}
         {system.helper === "major" && (
@@ -118,7 +133,7 @@ export default function System() {
                 </div>
                 <div className="code-fields">
                   {fields.map((f) => (
-                    <input key={f} value={e[f] || ""} placeholder={k === "15" ? PLACEHOLDER[f] : FIELD_LABEL[f]} aria-label={`${FIELD_LABEL[f]} for ${k}`}
+                    <input key={f} value={e[f] || ""} placeholder={placeholder(k, f)} aria-label={`${FIELD_LABEL[f]} for ${k}`}
                       onChange={(ev) => actions.setEntry(k, f, ev.target.value)} />
                   ))}
                 </div>
@@ -128,6 +143,9 @@ export default function System() {
         </div>
       </div>
       <PasteDialog open={paste} onClose={() => setPaste(false)} mode={system.mode} />
+      <Confirm open={fill} title={`Fill ${blank.length} numbers with examples?`} yes="Fill them"
+        text="Only numbers with no person and no action are filled. You can change any of them later, and you should: your own people stick better."
+        onNo={() => setFill(false)} onYes={useExamples} />
     </div>
   );
 }

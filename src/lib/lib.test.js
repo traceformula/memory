@@ -125,3 +125,20 @@ test("digit groups stay inside rows", () => {
   const of = (i) => g.findIndex((x) => i >= x.start && i < x.end);
   assert.deepEqual(mistakesByGroup(of, [1, 2, 41]), [{ group: 0, indexes: [1, 2] }, { group: 7, indexes: [41] }]);
 });
+
+import { EXAMPLES } from "./examples.js";
+test("100 examples, and each strict one has the right initials", () => {
+  assert.deepEqual(Object.keys(EXAMPLES).sort(), KEYS);
+  const people = Object.values(EXAMPLES).map((e) => e.person);
+  assert.equal(new Set(people).size, 100);
+  for (const [k, e] of Object.entries(EXAMPLES)) {
+    assert.ok(e.person && e.action, k);
+    const name = e.person.replace(/\(.*?\)/g, "").normalize("NFD").replace(/[̀-ͯ"']/g, "");
+    const initials = name.split(/[\s-]+/).filter(Boolean).map((w) => w[0].toUpperCase()).join("");
+    const [a, b] = dominicLetters(k);
+    const i = initials.indexOf(a);
+    const ok = i >= 0 && initials.indexOf(b, i + 1) > i;
+    if (e.loose) assert.ok(name.toUpperCase().replace(/[^A-Z]/g, "").startsWith(a + b) || name.toUpperCase().startsWith(a), `${k} loose ${e.person}`);
+    else assert.ok(ok, `${k} ${e.person} should have initials ${a}${b}, has ${initials}`);
+  }
+});

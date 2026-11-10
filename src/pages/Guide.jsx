@@ -17,6 +17,7 @@ export default function Guide() {
       <p>Each digit is a letter: 1 = A, 2 = B, 3 = C, 4 = D, 5 = E, 6 = S, 7 = G, 8 = H, 9 = N, 0 = O. Each pair of digits gives two letters, the initials of a person, and each person has one signature action. 15 is A·E, Albert Einstein, writing on a blackboard.</p>
       <p>For four digits, picture the first pair's person doing the second pair's action: 1534 is Einstein doing Charles Darwin's action. That is one image per stop, and only 200 things to learn (100 people and 100 actions).</p>
       <p>Choose people you feel something about: family, friends, people you admire or can't stand. The initials are only a starting point.</p>
+      <p>The <Link to="/system">number system</Link> page shows an example person and action for every number, and can fill the empty ones for you so you can start drilling today. Replace them with your own people as you go.</p>
       <p>Cards reuse the same people: each card <Link to="/cards">points to a number</Link>.</p>
 
       <h2>The plan</h2>
